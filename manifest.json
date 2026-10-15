@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "bxshi.omclip",
+  "name": "omclip",
+  "version": "0.1.0",
+  "author": "Dash Shi",
+  "license": "MIT",
+  "description": "Clipboard mirroring with a nearby Mac and iPhone: a bar pill and a panel that switch it on and off. Drives the omclip CLI (~/.local/bin/omclip) and never talks to the Mac itself.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "omclip",
+    "description": "Share the clipboard with a nearby Mac and iPhone",
+    "category": "System",
+    "aliases": ["omclip", "clipboard", "universal-clipboard"],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "barStyle": "Icon + count",
+      "pollSeconds": 2,
+      "notify": true
+    },
+    "schema": [
+      {
+        "key": "barStyle",
+        "type": "enum",
+        "label": "Bar pill",
+        "options": ["Icon", "Icon + peers", "Icon + count"],
+        "defaultValue": "Icon + count"
+      },
+      {
+        "key": "pollSeconds",
+        "type": "integer",
+        "label": "Poll interval while the panel is open (seconds)",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "defaultValue": 2
+      },
+      {
+        "key": "notify",
+        "type": "boolean",
+        "label": "Notifications, unless omclip's own config says otherwise",
+        "defaultValue": true
+      }
+    ]
+  }
+}

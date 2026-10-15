@@ -1,0 +1,43 @@
+[Unit]
+Description=omclip — Apple Universal Clipboard (continuity pasteboard) mirror
+Documentation=man:systemd.service(5)
+# Started on demand by `omclip on`; deliberately not enabled at boot and without an
+# [Install] section, so `systemctl --user enable omclip` cannot make it permanent.
+After=graphical-session.target
+
+[Service]
+Type=simple
+# The daemon needs the Wayland socket for wl-copy/wl-paste. XDG_RUNTIME_DIR is %t
+# (/run/user/UID); WAYLAND_DISPLAY is picked up from the user manager's environment,
+# and the daemon falls back to scanning %t for wayland-* if it is missing.
+Environment=XDG_RUNTIME_DIR=%t
+ExecStart=%h/.local/bin/omclip daemon
+# No Restart: a crash should be visible in `omclip status` (state error / no heartbeat)
+# rather than hidden by a restart loop that would also reconnect to the peers.
+Restart=no
+KillSignal=SIGTERM
+# The shutdown releases what `omclip on` opened: `omdrop off` (its supervisor tears its own
+# radio state down, ~1-3 s) and, when this run started it, `systemctl stop bluetooth` plus
+# `rfkill block` (~2 s). On top of that the main loop only checks the stop flag between
+# poll attempts, measured 8 s inside an AWDL resolution — so 3 s cut the cleanup short:
+# systemd SIGKILLed the daemon mid-release and left the omdrop window open and
+# bluetooth.service running (measured 2026-10-13). `omclip off` waits for this job, so the
+# budget is the honest worst case, not a hope.
+TimeoutStopSec=15
+# Every `wl-copy` offer forks a daemon that keeps the selection alive, and those daemons
+# are children of this service. The default KillMode=control-group takes them down with
+# the unit, so each stop or start (a scope toggle stops and starts the unit) empties the
+# clipboard: the item that was just mirrored disappears and `SUPER + V` pastes nothing.
+# KillMode=process leaves them serving — the next offer replaces them and each wl-copy
+# exits by itself once another client takes the selection. The omdrop helpers are the
+# ones that then outlive a stop, and they all carry their own deadline (the supervisor
+# and the BLE advertiser are started with a window), so nothing leaks indefinitely.
+KillMode=process
+# Hardening: omclip needs ~/.local/state/omclip (status, log), ~/.config/omclip
+# (settings), the identity in `identity_dir` and the ~/.omdrop keys, plus the
+# system/user D-Bus and the network — so no ProtectHome/ProtectSystem, which would
+# break those reads and the status writes.
+# NoNewPrivileges is deliberately NOT set: `omdrop on` (the AWDL window for the phone
+# scope) escalates through pkexec, and the setuid transition is exactly what
+# NoNewPrivileges blocks — measured 2026-10-13: with it, `omdrop on 5s` fails with
+# "pkexec must be setuid root"; without it, the window opens normally.

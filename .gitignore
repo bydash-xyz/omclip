@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+# never commit credential material (identity/key/cms/validation/db)
+identity/
+*identity*.json
+*ids*.json
+*key.pem
+*.key
+*.pem
+*.cms
+*validation*
+*.db
+!lib/omclip/identity.py

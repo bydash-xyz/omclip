@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+"""omclip — single entry point (CLI + `daemon`).
+
+`install.sh` symlinks this file to ~/.local/bin/omclip. The repo root is derived from
+the *resolved* path so the symlink works from anywhere.
+"""
+
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "lib"))
+
+from omclip.cli import main  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(main())
