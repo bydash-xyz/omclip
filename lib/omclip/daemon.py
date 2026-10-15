@@ -145,8 +145,11 @@ class Daemon:
         self.last_health = 0.0
         self.last_ble_trigger = 0.0
         self._mac_mdns = None          # last resolved instance (or None if none found)
-        self._mac_mdns_at = 0.0        # when the lookup last ran — success or not
-        self._mac_avahi_at = 0.0       # when avahi-browse was last spawned
+        # -inf, not 0.0: time.monotonic()'s epoch is arbitrary and is small on a freshly
+        # booted host, so a 0.0 sentinel would make the very first lookup look cached for
+        # up to MDNS_CACHE_S. -inf means "never ran", so the first resolve always looks up.
+        self._mac_mdns_at = float("-inf")   # when the lookup last ran — success or not
+        self._mac_avahi_at = float("-inf")  # when avahi-browse was last spawned
         self._mac_host_name = None     # SRV target of the matched instance (host memory)
         self._phone_last_good = None   # AWDL address that last resolved (tried first)
         self._mac_awdl = set()         # AWDL addresses that turned out to be the Mac

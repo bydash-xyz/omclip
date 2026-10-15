@@ -117,7 +117,14 @@ class OptionalBackend(unittest.TestCase):
             monitor._ready.set()
 
         monitor._run = fake_run
-        ok, backend = monitor.start(timeout=3.0)
+        # This exercises start()'s register-timeout bounding, not the optional gi/dbus
+        # bindings (absent on a stock CI runner), so the dependency gate is stubbed out.
+        saved_deps = ble.dependencies
+        ble.dependencies = lambda: (True, "ok")
+        try:
+            ok, backend = monitor.start(timeout=3.0)
+        finally:
+            ble.dependencies = saved_deps
         self.assertTrue(ok)
         self.assertEqual(backend, "monitor")
         self.assertLess(monitor._register_timeout, 3.0)
